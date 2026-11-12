@@ -1,6 +1,6 @@
 ---
 name: ask
-description: How to ask the user for decisions: question format with context and 2–4 options, a justified recommendation, the question tool or its fallbacks, grouping many questions, and how to read answers (explain-more requests, qualifiers, extra requests, "Other"). Used by the interview skill; use it whenever a skill needs the user to choose.
+description: How to ask the user for a decision – 2–4 options with context, a justified recommendation, and how to read the answers. Use whenever a skill needs the user to choose.
 ---
 
 # Ask
