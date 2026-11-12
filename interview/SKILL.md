@@ -1,6 +1,6 @@
 ---
 name: interview
-description: Interview the user until shared understanding is reached (confidence >90%, no unresolved material branch) before implementing. Corrects the request against the project vocabulary first and keeps the glossary up to date. Maps the task as a design tree, asks frontier questions in rounds, shows a one-line progress bar each round, and offers a consistency check with reworded questions at the end.
+description: Interview the user until shared understanding (>90 % confidence) before implementing – vocabulary check, question rounds, a progress line each round.
 ---
 
 # Interview
