@@ -1,91 +1,74 @@
-# Visualize: annotated diagrams
+# Visualize: annotated SVG diagrams
 
-How to show a diagram during an interview round, picked from the repo or generated from the code, with the change a question is about highlighted.
+How to show a diagram during an interview round as a hand-laid **inline SVG** (no Mermaid rendering), with the change a question is about highlighted. Repo diagrams are only a **source** to read nodes and edges from; the picture is always drawn as SVG.
+
+Call `read_me` (module `diagram`) once per session before the first `show_widget`, and follow its SVG rules: `viewBox="0 0 680 H"`, `role="img"` with `<title>` and `<desc>`, text classes `t` / `ts` / `th`, color classes `c-*`, 0.5px strokes, the arrow marker, sentence case, no overlaps.
 
 ## Find a source
 
-1. `git grep -l '```mermaid'` across the repo; also check `CONTEXT.md`, `CONTEXT-MAP.md` and the ADR folder (e.g. `docs/adr/`).
-2. Pick the block whose nodes, participants or states match the flow or module the frontier question touches.
-3. No matching diagram: generate one (next section). Never invent a "current state" you haven't verified in code or docs.
+1. `git grep -l '```mermaid'` across the repo; also check `CONTEXT.md`, `CONTEXT-MAP.md`, the ADR folder (e.g. `docs/adr/`), and checked-in `.svg` / `.drawio` / `.puml` files.
+2. Pick the one whose nodes, participants or states match the flow or module the frontier question touches. Read its nodes and edges; don't render it.
+3. Nothing matches: generate from code (next section). Never invent a "current state" you haven't verified in code or docs.
 
 ## Generate from code
 
-When the user picks "Generate from code" or no diagram exists:
+1. Read the code the question touches: entry point, the calls it makes, the stores or tables it writes. Stay inside what the effort level allows.
+2. Pick the shape:
+   - **flow**: wiring and data flow, boxes and arrows;
+   - **sequence**: calls between parts in order, lanes;
+   - **states**: UI or lifecycle states, boxes with transition arrows.
+3. Use real names from the code (class, component, endpoint, table). Leave out logging, mapping and other glue.
 
-1. Read the code that the question touches: entry point, the calls it makes, and the stores or tables it writes. Stay inside what the effort level allows.
-2. Pick the type:
-   - `sequenceDiagram` for calls between parts in order;
-   - `flowchart LR` for wiring and data flow;
-   - `stateDiagram-v2` for UI or lifecycle states.
-3. Use real names from the code (class, component, endpoint, table). 6–12 nodes. Leave out logging, mapping and other glue.
-4. Draw the current state first. Then annotate the change as below, never mixed in unmarked.
+## Trim before drawing
 
-## Prepare the source
+- **≤8 nodes per SVG.** Keep the nodes the change touches plus one neighbor on each side; drop the rest. A source with more becomes an overview (boxes only, ≤2 arrows) plus one detail SVG for the changed part.
+- Labels: title ≤20 chars, subtitle ≤5 words (e.g. the endpoint, the port, the store slice). Long names get shortened in the box and spelled out in the prose.
 
-- Copy the block as-is, then clean it:
-  - Quote every label: `A["…"]` and `-->|"…"|`. Brackets, slashes or pipes inside a label (`[/smart-search/text/]`, `|[data]|`) break the parser otherwise.
-  - Drop emoji.
-  - Keep `<br/>`.
-- Trim it to the part the question is about. 6–12 nodes is the sweet spot.
+## Layout
 
-## Annotate inside the Mermaid source
+**Flow (left → right or top → down):**
+- Columns at x = 40, 200, 360, 520 (box width 120–140, gap ≥ 20) for up to 4 tiers; or rows at y = 40, 140, 240, 340 for top-down.
+- Two-line boxes: height 56, title `th` at y+20, subtitle `ts` at y+38, both `text-anchor="middle" dominant-baseline="central"`. One-line boxes: height 44.
+- Box width ≥ max(title chars × 8, subtitle chars × 7) + 24.
+- Arrows run box edge to box edge. If a straight line would cross another box, route an L-shaped `<path fill="none">` around it.
 
-Never draw overlay arrows on the rendered SVG: node coordinates aren't known before render.
+**Sequence:**
+- ≤5 participants as boxes in a row at the top (width 110, centers evenly spaced from x=95 to x=585), dashed lifelines (`class="leader"`) straight down.
+- One horizontal arrow per message, 36px apart, label (`ts`, ≤4 words) 6px above the arrow, centered between the two lifelines. Return messages dashed.
 
-**flowchart / graph / stateDiagram:**
+**States:** like flow; one box per state, transition labels above the arrows (≤3 words).
 
-```
-classDef neu stroke:#1D9E75,stroke-width:2px,stroke-dasharray:5 3,fill:#1D9E7522
-classDef geaendert stroke:#BA7517,stroke-width:2px,fill:#BA751722
-classDef entfaellt stroke:#E24B4A,stroke-width:2px,stroke-dasharray:2 3,fill:#E24B4A14,color:#888780
-class NewNode neu
-class ChangedNode geaendert
-class OldNode entfaellt
-```
+**Height:** viewBox H = lowest element + 40 (the legend counts).
 
-- New edge: `A -.->|"neu: …"| B`.
-- Changed edge: color it with `linkStyle <index> stroke:#BA7517,stroke-width:2px` (index = 0-based order of edges in the source).
-- Removed edge: `linkStyle <index> stroke:#E24B4A,stroke-dasharray:2 3`.
+## Annotate
 
-**sequenceDiagram** (no classDef):
+| Mark | Box | Arrow |
+|---|---|---|
+| unchanged | `class="box"` (neutral) | `class="arr"` |
+| **neu** | `c-teal`, `stroke-dasharray="5 3"` and `stroke-width="1"` on the rect | `stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="5 3"`, `fill="none"`, arrow marker |
+| **geändert** | `c-amber`, `stroke-width="1"` | `stroke="#BA7517" stroke-width="1.5"` |
+| **entfällt** | `c-red`, `stroke-dasharray="2 3"`, `opacity="0.6"` | `stroke="#E24B4A" stroke-dasharray="2 3"`, `opacity="0.6"` |
 
-```
-rect rgba(29,158,117,0.15)
-  A->>B: neuer Schritt
-end
-rect rgba(186,117,23,0.15)
-  B->>C: geänderter Schritt
-end
-Note over A,B: neu: …
-```
+- Mark only what the option changes; everything else stays neutral, so the change is the only colour on the page.
+- New arrows may carry a short `ts` label like "neu: GET" placed in clear space, never on the line.
+- Pair colour with the dash pattern (accessibility): never colour alone.
+- For sequence diagrams, mark a new or changed message by its arrow style, and put a pale `c-teal` / `c-amber` rect (rx 4, behind the arrows) around a block of several new or changed messages.
 
-## Widget template
+## Legend (always)
 
-Call `read_me` (module `diagram`) once per session before the first `show_widget`. Keep the init block exactly like this: font settings drive layout measurement.
+A single row at the bottom, inside the SVG: three small sample rects (16×10, rx 2) with the patterns above and `ts` labels "neu", "geändert", "entfällt", starting at x=40, 100px apart. Always all three, so every diagram reads the same.
 
-```html
-<h2 class="sr-only">ONE-SENTENCE SUMMARY</h2>
-<div id="d"></div>
-<div style="display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--text-secondary)">
-  <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:10px;border:2px dashed #1D9E75;border-radius:2px"></span>neu</span>
-  <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:10px;border:2px solid #BA7517;border-radius:2px"></span>geändert</span>
-  <span style="display:flex;align-items:center;gap:4px"><span style="width:14px;height:10px;border:2px dotted #E24B4A;border-radius:2px"></span>entfällt</span>
-</div>
-<script type="module">
-import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
-const m = document.documentElement.dataset.mode;
-const dark = m ? m === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-await document.fonts.ready;
-mermaid.initialize({ startOnLoad: false, theme: 'base', fontFamily: '"anthropic-sans", sans-serif',
-  themeVariables: { darkMode: dark, fontSize: '13px', fontFamily: '"anthropic-sans", sans-serif',
-    lineColor: dark ? '#9c9a92' : '#73726c', textColor: dark ? '#c2c0b6' : '#3d3d3a',
-    primaryColor: dark ? '#2c2c2a' : '#f1efe8', primaryBorderColor: dark ? '#5f5e5a' : '#b4b2a9' } });
-const src = `MERMAID SOURCE`;
-try { document.getElementById('d').innerHTML = (await mermaid.render('d-svg', src)).svg; }
-catch (err) { document.getElementById('d').innerHTML = '<pre style="font-size:12px;color:var(--text-danger);white-space:pre-wrap">' + String(err.message || err).replace(/</g,'&lt;') + '</pre>'; }
-</script>
-```
+## Per option
 
-- Escape backticks and `${` inside `src`.
-- Always show all three legend items, even when the diagram uses fewer, so every diagram reads the same.
-- Make a node clickable: add `click NodeId call sendPrompt("…")` with `securityLevel: 'loose'`. Only do this when a follow-up question really helps.
+When the options differ structurally, draw one SVG per option (≤3), same layout and node positions in each, so only the marks change between them. One SVG per `show_widget` call, prose with the option letter between them.
+
+## Clickable nodes
+
+Wrap a box in `<g class="node" onclick="sendPrompt('…')">` only when a follow-up question really helps (e.g. "Was macht `OwnerSearchDrawer` heute?").
+
+## Checklist before showing
+
+- Every box fits its longest label; no two boxes in a row closer than 20px.
+- No arrow crosses a box it doesn't connect; no label sits on a line.
+- Nothing outside x 0–680 / y 0–H; every `<text>` has a class.
+- Every connector `<path>` has `fill="none"`.
