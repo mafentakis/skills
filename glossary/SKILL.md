@@ -1,6 +1,6 @@
 ---
 name: glossary
-description: Check a request or a text (spec, PR description, docs page, issue) against the project's glossary (CONTEXT.md and similar), rewrite words that differ, and keep the glossary current with settled terms and _Avoid_ aliases. Used by the interview skill for its vocabulary round; also usable alone ("check this against the glossary").
+description: Check a request or text against the project glossary (CONTEXT.md and similar), rewrite words that differ, keep the glossary current.
 ---
 
 # Glossary

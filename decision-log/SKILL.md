@@ -1,6 +1,6 @@
 ---
 name: decision-log
-description: Record decisions with their origin ([USER], [AGENT · DATA] with evidence, [ASSUMPTION]) and date, keep superseded decisions traceable, and split "confirm as built" from "changes to build" with one issue per change. Used by the interview skill; also usable alone ("record what we decided in #35–#41", "write the decisions to the plan").
+description: Record decisions with origin ([USER], [AGENT · DATA] with evidence, [ASSUMPTION]) and date, keep superseded ones traceable. Use for "record what we decided".
 ---
 
 # Decision log
